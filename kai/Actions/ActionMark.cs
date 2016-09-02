@@ -18,6 +18,10 @@ namespace Piksel.Kai
                 var moment = project.CreateMoment().Result;
                 Console.WriteLine($"Done!\nHashed {moment.Hashes.Count} file(s) in {(DateTime.Now - start).TotalSeconds:F2} second(s).");
 
+                Console.Write("Creating Moment snapshots... ");
+                var newSnapshots = project.CreateSnapshots(moment).Result;
+                Console.WriteLine($"Done!\nCreated {newSnapshots} new snapshot(s).");
+
                 Console.WriteLine($"Created new Moment #{moment.Index}.");
 
                 moment.Save();

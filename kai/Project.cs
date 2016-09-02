@@ -13,6 +13,14 @@ namespace Piksel.Kai
         public string FileListPath        { get { return Path.Combine(ProjectPath, "filelist"); } }
         public string ProjectSettingsPath { get { return Path.Combine(ProjectPath, "settings.yaml"); } }
         public string MomentPath          { get { return Path.Combine(ProjectPath, "moments"); } }
+        public string SnapshotsPath       { get { return Path.Combine(ProjectPath, "snapshots"); } }
+
+        internal Moment GetMoment(int index)
+        {
+            return Moment.Load(this, index);
+        }
+
+        public Snapshots Snapshots { get; set; }
 
         internal Task<Moment> CreateMoment()
         {
@@ -25,6 +33,34 @@ namespace Piksel.Kai
                 }
                 return moment;
             });
+        }
+
+        internal Task<int> CreateSnapshots(Moment moment)
+        {
+            return Task.Run<int>(() =>
+            {
+                int newSnapshots = 0;
+                for(int i=0; i<moment.Hashes.Count; i++)
+                {
+                    var fileSnapshots = Snapshots[i];
+                    if(!fileSnapshots.Exists(moment.Hashes[i]))
+                    {
+                        CreateFileSnapshot(fileSnapshots, moment, i);
+                        newSnapshots++;
+                    }
+                }
+                return newSnapshots;
+            });
+        }
+
+        private void CreateFileSnapshot(SnapshotFile fileSnapshots, Moment moment, int index)
+        {
+            
+            var snapshotFile = fileSnapshots.SnapshotPath(moment.Hashes[index]);
+            Directory.CreateDirectory(Path.GetDirectoryName(snapshotFile));
+
+            File.Copy(FileList[index], snapshotFile);
+
         }
 
         List<string> _fileList;
@@ -55,14 +91,15 @@ namespace Piksel.Kai
 
         public ProjectSettings ProjectSettings { get; set; }
 
-        string _kaiPath;
+        string _projectPath;
         public string ProjectPath {  get
             {
-                if(string.IsNullOrEmpty(_kaiPath))
-                    _kaiPath =  Path.Combine(Path.GetFullPath(RootPath), ".kai");
-                return _kaiPath;
+                if(string.IsNullOrEmpty(_projectPath))
+                    _projectPath =  Path.Combine(Path.GetFullPath(RootPath), ".kai");
+                return _projectPath;
             }
         }
+
 
 
         public static Project Create(string path)
@@ -106,6 +143,7 @@ namespace Piksel.Kai
             var p = new Project();
             p.RootPath = path;
             p.ProjectSettings = ProjectSettings.Load(p.ProjectSettingsPath);
+            p.Snapshots = new Snapshots(p);
 
             return p;
         }

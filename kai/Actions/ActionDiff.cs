@@ -16,9 +16,25 @@ namespace Piksel.Kai
             try {
                 if (_so.Moments.Count < 2) throw new ArgumentException();
 
+                var project = Project.Load(Environment.CurrentDirectory);
+
                 Console.WriteLine($"Differences between Moment #{_so.Moments[0]} and Moment #{_so.Moments[1]}:");
 
-                throw new NotImplementedException();
+                var momentA = project.GetMoment(int.Parse(_so.Moments[0]));
+                var momentB = project.GetMoment(int.Parse(_so.Moments[1]));
+
+                int changes = 0;
+
+                for(int i=0; i< momentA.Hashes.Count; i++)
+                {
+                    if (momentA.Hashes[i] != momentB.Hashes[i])
+                    {
+                        Console.WriteLine($"{momentA.Hashes[i].ToString("x8")} -> {momentA.Hashes[i].ToString("x8")} {project.FileList[i]}");
+                        changes++;
+                    }
+                }
+
+                Console.WriteLine($"\n{changes} change(s) in total.");
 
                 return ExitCodes.Success;
             }
